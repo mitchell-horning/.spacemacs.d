@@ -24,12 +24,14 @@ values."
 
      html
      asciidoc
-     org
+     (org :variables
+          org-enable-github-support t
+          org-projectile-file "TODOs.org")
      latex
 
      helm
      (treemacs :variables
-               treemacs-use-follow-mode 'tag
+               treemacs-use-follow-mode t
                treemacs-use-filewatch-mode t
                treemacs-use-git-mode 'deffered)
      (shell :variables
@@ -175,6 +177,11 @@ values."
   (setq-default treemacs-show-hidden-files nil)
 
   (global-aggressive-indent-mode 1)
+
+  ;; org mode
+  (with-eval-after-load 'org-agenda
+    (require 'org-projectile)
+    (push (org-projectile:todo-files) org-agenda-files))
 
   ;; clojure setup
   (setq cider-font-lock-dynamically '(macro core function var))
