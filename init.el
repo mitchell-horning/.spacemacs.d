@@ -31,6 +31,7 @@ values."
           org-enable-sticky-header t)
      latex
 
+     helpful
      helm
      (treemacs :variables
                treemacs-use-follow-mode t
