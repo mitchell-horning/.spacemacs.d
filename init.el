@@ -32,7 +32,9 @@ values."
      latex
 
      helpful
-     helm
+     (helm :variables
+           helm-enable-auto-resize t
+           hybrid-style-enable-hjkl-bindings t)
      (treemacs :variables
                treemacs-use-follow-mode t
                treemacs-use-filewatch-mode t
@@ -45,8 +47,8 @@ values."
      auto-completion
      spell-checking
      syntax-checking
-
      lsp
+
      lispy
      (clojure :variables
               clojure-enable-sayid t
@@ -61,6 +63,8 @@ values."
      sql
 
      systemd
+
+     slack
 
      themes-megapack
      )
@@ -247,7 +251,48 @@ values."
       (haskell-indentation-newline-and-indent))
 
     (evil-define-key 'normal haskell-mode-map "o" 'haskell-evil-open-below
-      "O" 'haskell-evil-open-above)))
+      "O" 'haskell-evil-open-above))
+
+  ;; slack
+  (setq slack-buffer-emojify t
+        slack-prefer-current-team t)
+  (slack-register-team
+   :name "ATA emacs-slack"
+   :default t
+   :client-id "mhorning@ata-llc.com"
+   :client-secret (auth-source-pick-first-password
+                   :host '("slack-emacs")
+                   :user "secret"
+                   :type 'netrc :max 1)
+   :token (auth-source-pick-first-password
+           :host '("slack-emacs")
+           :user "token"
+           :type 'netrc :max 1)
+   :subscribed-channels '(articles
+                          clojure
+                          databases
+                          dhs-badging
+                          dhs-sosoa
+                          elixer
+                          emacs
+                          full-stack-data-science
+                          general
+                          happyhourtrain
+                          mandalorians
+                          mda-watchtower
+                          mob_programming
+                          pa-access
+                          pa-analytics
+                          pa-collect_ingest
+                          pa-data_architecture
+                          pa-infrastructure
+                          pa-measurement
+                          pa-reqs
+                          pa-strategy
+                          pa-vis
+                          plusone
+                          random
+                          wayfinders)))
 
 ;; Do not write anything past this comment. This is where Emacs will
 ;; auto-generate custom variable definitions.
