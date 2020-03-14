@@ -4,23 +4,25 @@
 
 (defun lispy/init-lispyville ()
   (use-package lispyville
-    :diminish lispyville-mode "Ⓥ"
     :init
     (add-hook 'lispy-mode-hook #'lispyville-mode)
-    :config (lispyville-set-key-theme '(operators
-                                        c-w
-                                        c-u
-                                        prettify
-                                        atom-movement
-                                        additional-motions
-                                        commentary
-                                        slurp/barf-lispy
-                                        escape))))
+    :config
+    (progn
+      (diminish 'lispyville-mode (lispyville-mode-line-string "🍰" "🍰"))
+      (lispyville-set-key-theme '(operators
+                                  c-w
+                                  c-u
+                                  prettify
+                                  atom-movement
+                                  additional-motions
+                                  commentary
+                                  slurp/barf-lispy
+                                  escape)))))
 
 (defun lispy/init-lispy ()
   (use-package lispy
     :defer t
-    :diminish lispy-mode "Ⓛ"
+    :diminish lispy-mode ""
     :hook ((clojure-mode cider-repl-mode emacs-lisp-mode lisp-mode) . lispy-mode)
     :custom
     (lispy-compat '(edebug cider magit-blame-mode))
