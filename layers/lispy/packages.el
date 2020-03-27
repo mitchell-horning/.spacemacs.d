@@ -31,6 +31,7 @@
     (progn
       (define-key lispy-mode-map (kbd "M-RET") nil)
       (evil-define-key 'insert lispy-mode-map
+        (kbd ")")   'lispy-right-nostring
         (kbd "C-d") 'lispy-delete
         (kbd "C-k") 'lispy-kill
         (kbd "C-y") 'lispy-yank
