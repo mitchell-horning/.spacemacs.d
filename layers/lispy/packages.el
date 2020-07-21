@@ -23,7 +23,8 @@
   (use-package lispy
     :defer t
     :diminish lispy-mode ""
-    :hook ((clojure-mode cider-repl-mode emacs-lisp-mode lisp-mode) . lispy-mode)
+    :hook ((clojure-mode cider-repl-mode emacs-lisp-mode lisp-mode) .
+           lispy-mode)
     :custom
     (lispy-compat '(edebug cider magit-blame-mode))
     (lispy-eval-display-style 'overlay)
@@ -31,12 +32,11 @@
     (progn
       (define-key lispy-mode-map (kbd "M-RET") nil)
       (evil-define-key 'insert lispy-mode-map
+        (kbd "/")   'special-lispy-splice
         (kbd ")")   'lispy-right-nostring
         (kbd "C-d") 'lispy-delete
-        (kbd "C-k") 'lispy-kill
         (kbd "C-y") 'lispy-yank
-        (kbd "C-e") 'lispy-ove-end-of-line
-        (kbd "C-n") 'lispy-mark-symbol
+        (kbd "C-e") 'lispy-move-end-of-line
         (kbd "M-.") 'lispy-goto-symbol))))
 
 ;;; packages.el ends here
