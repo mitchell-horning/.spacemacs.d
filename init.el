@@ -13,11 +13,12 @@
                       auto-completion-enable-help-tooltip t
                       auto-completion-enable-sort-by-usage t)
      (clojure :variables
-              clojure-enable-sayid t
+              clojure-enable-sayid nil
               clojure-enable-clj-refactor t
               clojure-enable-fancify-symbols t
               clojure-enable-linters '(clj-kondo)
-              clojure-align-forms-automatically t)
+              clojure-align-forms-automatically t
+              clojure-indent-style 'align-arguments)
      (colors :variables colors-colorize-identifiers 'variables)
      command-log
      csv
@@ -57,8 +58,15 @@
      (javascript :variables javascript-backend 'lsp)
      kubernetes
      latex
-     lispy
-     lsp
+     ;; lispy
+     (lsp :variables
+          lsp-enable-indentation nil
+          lsp-enable-symbol-highlighting nil
+          lsp-ui-doc-delay 5
+          lsp-ui-doc-use-childframe t
+          ;; lsp-ui-doc-position 'top
+          lsp-ui-sideline-show-code-actions nil
+          lsp-keymap-prefix "C-c C-l")
      major-modes
      (multiple-cursors :variables multiple-cursors-backend 'mc)
      (markdown :variables markdown-live-preview-engine 'vmd)
@@ -92,6 +100,7 @@
      (spacemacs-layouts :variables
                         spacemacs-layouts-restrict-spc-tab t
                         persp-autokill-buffer-on-remove 'kill-weak)
+     spacemacs-purpose
      spell-checking
      (sql :variables
           sql-capitalize-keywords t
@@ -102,6 +111,7 @@
      terraform
      themes-megapack
      (treemacs :variables
+               treemacs-use-scope-type 'Perspectives
                treemacs-use-follow-mode t
                treemacs-use-filewatch-mode t
                treemacs-use-git-mode 'deffered)
@@ -114,6 +124,8 @@
       :location (recipe :fetcher github
                         :repo "l3kn/org-fc"
                         :files (:defaults "awk" "demo.org")))
+     (evil-adjust :location (recipe :fetcher github :repo "troyp/evil-adjust"))
+     kaocha-runner
      inf-clojure
      edbi
      org-roam
@@ -140,9 +152,12 @@
                                 (recents . 5))
    dotspacemacs-startup-buffer-responsive t
    dotspacemacs-scratch-mode 'emacs-lisp-mode
-   dotspacemacs-themes '(solarized-dark
-                         solarized-light
-                         doom-laserwave)
+   dotspacemacs-themes '(doom-fairy-floss
+                         doom-solarized-dark
+                         doom-solarized-light
+                         doom-laserwave
+                         doom-city-lights
+                         doom-manegarm)
    dotspacemacs-colorize-cursor-according-to-state t
    dotspacemacs-mode-line-theme 'spacemacs
    dotspacemacs-default-font '("SauceCodePro Nerd Font"
@@ -177,7 +192,7 @@
    dotspacemacs-helm-resize nil
    ;; if non nil, the helm header is hidden when there is only one source.
    ;; (default nil)
-   dotspacemacs-helm-no-header nil
+   dotspacemacs-helm-no-header t
    dotspacemacs-helm-position 'bottom
    dotspacemacs-helm-use-fuzzy 'always
    dotspacemacs-enable-paste-transient-state t
@@ -213,22 +228,42 @@
   (require 'dbus)
   (setq confirm-kill-processes nil)
   (setq kill-buffer-query-funcrtions nil)
+  (setq mouse-autoselect-window t
+        focus-follows-mouse t)
   (setq exwm-randr-workspace-monitor-plist '(0 "DP1" 1 "DP3" 2 "eDP1")))
 
 (defun dotspacemacs/user-config ()
+
+  (add-to-list 'purpose-user-mode-purposes '(exwm-mode . gui))
+  (add-to-list 'purpose-user-mode-purposes '(help-mode . debug))
+  (add-to-list 'purpose-user-mode-purposes '(helpful-mode . debug))
+  (add-to-list 'purpose-user-mode-purposes '(cider-repl-mode . debug))
+  (add-to-list 'purpose-user-regexp-purposes
+               '("^X:Chromium/DevTools.*$" . debug))
+  (add-to-list 'purpose-user-regexp-purposes
+               '("^X:Chromium/re-frame-10x.*$" . debug))
+  (purpose-compile-user-configuration)
+
+  (require 'evil-adjust)
+  (evil-adjust)
+
+  (setq-default evil-cleverparens-use-s-and-S nil)
+  (setq-default evil-cleverparens-use-regular-insert nil)
+  (setq-default evil-cleverparens-swap-move-by-word-and-symbol t)
   (load "~/.spacemacs.d/secret-codes.el")
 
+  (spacemacs/toggle-desktop-environment-on)
   (spaceline-toggle-hud-off)
-  (global-set-key (kbd "<XF86MonBrightnessUp>") 'ignore)
-  (global-set-key (kbd "<XF86MonBrightnessDown>") 'ignore)
 
-  (setq-default which-key-idle-delay 3)
+  (spacemacs/toggle-vi-tilde-fringe-off)
+
+  (setq-default which-key-idle-delay 2)
   (setq-default which-key-show-early-on-C-h t)
 
   (spacemacs/toggle-evil-visual-mark-mode-on)
   (setq-default evil-ex-search-vim-style-regexp t)
   (avy-setup-default)
-  (define-key evil-normal-state-map (kbd "s") 'avy-goto-char-2)
+  (define-key evil-normal-state-map (kbd "s") 'avy-goto-char)
   (global-set-key (kbd "M-n") 'avy-goto-char-2)
 
   (defun switch-to-buffer--hack (orig-fun &rest args)
@@ -240,33 +275,34 @@
 
   (defun spacemacs/home () nil)
   (add-hook 'org-mode-hook 'org-indent-mode)
-  (setq org-journal-find-file 'find-file)
-  (add-hook 'persp-created-functions
-            (lambda (persp hash)
-              (spacemacs-buffer/goto-buffer)
-              (org-journal-new-entry t)
-              (persp-add-buffer
-               (get-buffer (format-time-string "%Y-%m-%d.org"))
-               persp)))
+  ;; (setq org-journal-find-file 'find-file)
+  ;; (add-hook 'persp-created-functions
+  ;;           (lambda (persp hash)
+  ;;             (spacemacs-buffer/goto-buffer)
+  ;;             (org-journal-new-entry t)
+  ;;             (persp-add-buffer
+  ;;              (get-buffer (format-time-string "%Y-%m-%d.org"))
+  ;;              persp)))
 
-  (add-hook 'org-journal-after-header-create-hook
-            (lambda ()
-              (insert "\n\n* "
-                      "Previous journal entry: "
-                      "[[" (car (reverse (org-journal-list-files))) "]"
-                      "[" (mapconcat 'int-to-string
-                                     (car (reverse (org-journal-list-dates)))
-                                     "-")
-                      "]]")
-              (org-agenda-file-to-front)
-              (save-buffer)))
+  ;; (add-hook 'org-journal-after-header-create-hook
+  ;;           (lambda ()
+  ;;             (insert "\n\n* "
+  ;;                     "Previous journal entry: "
+  ;;                     "[[" (car (reverse (org-journal-list-files))) "]"
+  ;;                     "[" (mapconcat 'int-to-string
+  ;;                                    (car (reverse (org-journal-list-dates)))
+  ;;                                    "-")
+  ;;                     "]]")
+  ;;             (org-agenda-file-to-front)
+  ;;             (save-buffer)))
 
-  (add-hook 'org-journal-after-entry-create-hook
-            (lambda ()
-              (save-excursion
-                (beginning-of-line)
-                (insert "\n"))
-              (save-buffer)))
+  ;; (add-hook 'org-journal-after-entry-create-hook
+  ;;           (lambda ()
+  ;;             (save-excursion
+  ;;               (beginning-of-line)
+  ;;               (insert "\n"))
+  ;;             (save-buffer)))
+  (setq browse-url-mosaic-program nil)
 
   (with-eval-after-load 'org
     (load-file "~/.spacemacs.d/private/org-habit-plus/org-habit-plus.el")
@@ -277,7 +313,7 @@
 
   (server-start)
 
-  (fancy-battery-mode)
+  ;; (fancy-battery-mode)
 
   (add-hook 'buffer-list-update-hook
             (lambda ()
@@ -296,9 +332,9 @@
                                 (string-to-number
                                  (shell-command-to-string
                                   "xrandr|grep \" connected\"|wc -l")))))
-                (cond ((< 0 surplus) (dotimes (n surplus v)
+                (cond ((< 0 surplus) (dotimes (n surplus)
                                        (exwm-workspace-delete)))
-                      ((< surplus 0) (dotimes (n (* -1 surplus) v)
+                      ((< surplus 0) (dotimes (n (* -1 surplus))
                                        (exwm-workspace-add)))
                       (t nil)))))
 
@@ -307,6 +343,21 @@
    (lambda ()
      (interactive)
      (start-process-shell-command "qutebrowser" nil "qutebrowser")))
+  (exwm-input-set-key
+   (kbd "s-F")
+   (lambda ()
+     (interactive)
+     (start-process-shell-command "chromium" nil "chromium")))
+  (exwm-input-set-key
+   (kbd "s-C-F")
+   (lambda ()
+     (interactive)
+     (start-process-shell-command "firefox" nil "firefox")))
+  (exwm-input-set-key
+   (kbd "s-s")
+   (lambda ()
+     (interactive)
+     (start-process-shell-command "slack" nil "slack")))
   (exwm-input-set-key
    (kbd "s-p")
    (lambda ()
@@ -324,20 +375,25 @@
            (dolist (hook hooks)
              (add-hook hook functions)))))
 
-  (add-hooks '(org-mode-hook markdown-mode-hook ;; slack-mode-hook
-                             )
+  (add-hooks '(org-mode-hook
+               markdown-mode-hook ;; slack-mode-hook
+               treemacs-mode-hook)
              #'mixed-pitch-mode)
 
   (setq-default fill-column 80)
   (add-hooks '(prog-mode-hook text-mode-hook) #'auto-fill-mode)
-  ;;(add-hooks '(prog-mode-hook text-mode-hook) #'fci-mode)
+  ;; (add-hook 'prog-mode-hook #'fci-mode)
   (add-hook 'prog-mode-hook #'column-enforce-mode)
   (setq projectile-indexing-method 'hybrid)
+
+  (spacemacs/toggle-evil-safe-lisp-structural-editing-on-register-hooks)
 
   (spacemacs/declare-prefix "o" "custom")
 
   (setq-default treemacs-show-hidden-files nil
                 treemacs-width 25)
+
+  ;; (set-face-attribute 'treemacs-root-face t :font "Source Sans Pro")
 
   (global-aggressive-indent-mode 1)
   (add-to-list 'aggressive-indent-excluded-modes 'cider-repl-mode)
@@ -349,6 +405,17 @@
   (setq-default js-indent-level 2)
 
   ;; clojure setup
+  (use-package lsp-mode
+    :ensure t
+    :hook ((clojure-mode . lsp)
+           (clojurec-mode . lsp)
+           (clojurescript-mode . lsp))
+    :custom (lsp-enable-indentation nil)
+    :commands lsp
+    :config
+    (dolist (m '(clojure-mode clojurec-mode clojurescript-mode clojurex-mode))
+      (add-to-list 'lsp-language-id-configuration `(,m . "clojure"))))
+
   (setq cider-repl-display-help-banner nil
         cider-font-lock-dynamically '(macro core function var)
         nrepl-sync-request-timeout 120
@@ -356,6 +423,10 @@
         ;; cider-jdk-src-paths '("~/.java-src/java-11-openjdk"
         ;;                       "~/.java-src/java-8-openjdk")
         )
+
+  (setq cider-repl-pop-to-buffer-on-connect 'display-only)
+  (setq cider-allow-jack-in-without-project t)
+  ;; (setq cider-clojure-cli-global-options "-A:scratch")
 
   (add-hook 'cider-inspector-mode-hook #'spacemacs/toggle-truncate-lines-on)
   (add-hook 'cider-repl-mode-hook #'cider-company-enable-fuzzy-completion)
@@ -366,6 +437,7 @@
 
   (with-eval-after-load 'clojure-mode
     (define-clojure-indent
+      (prop/for-all 1)
       (rf/reg-event-fx 'defun)
       (rf/reg-event-db 'defun)
       (rf/reg-sub 'defun)
@@ -413,6 +485,11 @@
                               (cider--nrepl-pr-request-map))))
 
   (spacemacs/set-leader-keys-for-major-mode 'clojure-mode
+    "tkn" 'kaocha-runner-run-tests
+    "tkt" 'kaocha-runner-run-test-at-point
+    "tka" 'kaocha-runner-run-all-tests
+    "tks" 'kaocha-runner-show-warnings
+    "tkh" 'kaocha-runner-hide-windows
     "ta" 'cider-test-run-project-tests
     "tn" 'cider-test-run-ns-tests
     "tt" 'cider-test-run-test
@@ -482,16 +559,23 @@ This function is called at the very end of Spacemacs initialization."
    ;; If there is more than one, they won't work right.
    '(evil-want-Y-yank-to-eol t)
    '(org-agenda-files
-     (quote
-      ("~/org/journal/2020-07-20.org" "~/org/journal/2020-07-17.org" "~/org/journal/2020-07-16.org" "~/org/journal/2020-07-15.org" "~/org/journal/2020-07-14.org" "~/org/journal/2020-07-13.org" "~/org/journal/2020-07-11.org" "~/org/journal/2020-07-10.org" "~/org/journal/2020-07-09.org" "~/org/journal/2020-07-08.org" "~/org/journal/2020-07-07.org" "~/org/journal/2020-07-06.org" "~/org/journal/2020-07-02.org" "~/org/journal/2020-07-01.org" "~/org/journal/2020-06-30.org" "~/org/journal/2020-06-29.org" "~/org/journal/2020-06-26.org" "~/org/journal/2020-06-25.org" "~/org/journal/2020-06-24.org" "~/org/journal/2020-06-23.org" "~/org/journal/2020-06-22.org" "~/org/journal/2020-06-20.org" "~/org/journal/2020-06-19.org" "~/org/journal/2020-06-18.org" "~/org/journal/2020-06-17.org")))
+     '("~/org/journal/2020-08-10.org" "~/org/journal/2020-08-07.org" "~/org/journal/2020-08-06.org" "~/org/journal/2020-08-05.org" "~/org/journal/2020-08-04.org" "~/org/journal/2020-08-03.org" "~/org/journal/2020-08-02.org" "~/org/journal/2020-08-01.org" "~/org/journal/2020-07-31.org" "~/org/journal/2020-07-30.org" "~/org/journal/2020-07-29.org" "~/org/journal/2020-07-28.org" "~/org/journal/2020-07-27.org" "~/org/journal/2020-07-26.org" "~/org/journal/2020-07-24.org"))
    '(package-selected-packages
-     (quote
-      (yasnippet-snippets vterm terminal-here slack scad-mode org-superstar org-roam-bibtex org-roam emacsql-sqlite3 org-journal org-brain modus-vivendi-theme modus-operandi-theme magit-section lsp-ui lsp-python-ms counsel ivy kaolin-themes helm-lsp forge ghub closql flycheck-bashate doom-themes dap-mode posframe lsp-treemacs treemacs package-lint lsp-mode restclient-helm ob-restclient ob-http company-restclient restclient know-your-http-well org-fc ranger company-terraform terraform-mode hcl-mode company-shell company-reftex company-quickhelp company-emoji company-ansible command-log-mode color-identifiers-mode chocolate-theme cargo rust-mode browse-at-remote blacken auctex-latexmk attrap arduino-mode ansible-doc ansible vmd-mode systemd dockerfile-mode docker tablist docker-tramp adoc-mode markup-faces sql-indent company-auctex auctex web-beautify livid-mode skewer-mode simple-httpd json-mode json-snatcher json-reformat js2-refactor js2-mode js-doc company-tern tern coffee-mode yapfify pyvenv pytest pyenv-mode py-isort pip-requirements live-py-mode hy-mode dash-functional helm-pydoc cython-mode company-anaconda anaconda-mode pythonic tidal yaml-mode intero hlint-refactor hindent helm-hoogle haskell-snippets flycheck-haskell company-ghci company-ghc ghc haskell-mode company-cabal cmm-mode erc-yt erc-view-log erc-social-graph erc-image erc-hl-nicks web-mode tagedit slim-mode scss-mode sass-mode pug-mode helm-css-scss haml-mode emmet-mode company-web web-completion-data mu4e-maildirs-extension mu4e-alert ht xterm-color shell-pop multi-term mmm-mode markdown-toc markdown-mode gh-md eshell-z eshell-prompt-extras esh-help zenburn-theme zen-and-art-theme white-sand-theme underwater-theme ujelly-theme twilight-theme twilight-bright-theme twilight-anti-bright-theme toxi-theme tao-theme tangotango-theme tango-plus-theme tango-2-theme sunny-day-theme sublime-themes subatomic256-theme subatomic-theme spacegray-theme soothe-theme solarized-theme soft-stone-theme soft-morning-theme soft-charcoal-theme smyx-theme seti-theme reverse-theme rebecca-theme railscasts-theme purple-haze-theme professional-theme planet-theme phoenix-dark-pink-theme phoenix-dark-mono-theme organic-green-theme omtose-phellack-theme oldlace-theme occidental-theme obsidian-theme noctilux-theme naquadah-theme mustang-theme monokai-theme monochrome-theme molokai-theme moe-theme minimal-theme material-theme majapahit-theme madhat2r-theme lush-theme light-soap-theme jbeans-theme jazz-theme ir-black-theme inkpot-theme heroku-theme hemisu-theme hc-zenburn-theme gruvbox-theme gruber-darker-theme grandshell-theme gotham-theme gandalf-theme flatui-theme flatland-theme farmhouse-theme exotica-theme espresso-theme dracula-theme django-theme darktooth-theme autothemer darkokai-theme darkmine-theme darkburn-theme dakrone-theme cyberpunk-theme color-theme-sanityinc-tomorrow color-theme-sanityinc-solarized clues-theme cherry-blossom-theme busybee-theme bubbleberry-theme birds-of-paradise-plus-theme badwolf-theme apropospriate-theme anti-zenburn-theme ample-zen-theme ample-theme alect-themes afternoon-theme smeargle orgit org-projectile org-category-capture org-present org-pomodoro alert log4e gntp org-mime org-download magit-gitflow magit-popup htmlize helm-gitignore helm-company helm-c-yasnippet gnuplot gitignore-mode gitconfig-mode gitattributes-mode git-timemachine git-messenger git-link git-gutter-fringe+ git-gutter-fringe fringe-helper git-gutter+ git-gutter fuzzy flyspell-correct-helm flyspell-correct flycheck-pos-tip pos-tip flycheck evil-magit magit transient git-commit with-editor diff-hl company-statistics company clojure-snippets auto-yasnippet auto-dictionary ac-ispell auto-complete lispy clj-refactor inflections edn multiple-cursors paredit yasnippet peg cider-eval-sexp-fu cider sesman queue parseedn clojure-mode parseclj a ws-butler winum which-key volatile-highlights vi-tilde-fringe uuidgen use-package toc-org spaceline powerline restart-emacs request rainbow-delimiters popwin persp-mode pcre2el paradox spinner org-plus-contrib org-bullets open-junk-file neotree move-text macrostep lorem-ipsum linum-relative link-hint indent-guide hydra lv hungry-delete hl-todo highlight-parentheses highlight-numbers parent-mode highlight-indentation helm-themes helm-swoop helm-projectile projectile pkg-info epl helm-mode-manager helm-make helm-flx helm-descbinds helm-ag google-translate golden-ratio flx-ido flx fill-column-indicator fancy-battery eyebrowse expand-region exec-path-from-shell evil-visualstar evil-visual-mark-mode evil-unimpaired evil-tutor evil-surround evil-search-highlight-persist highlight evil-numbers evil-nerd-commenter evil-mc evil-matchit evil-lisp-state smartparens evil-indent-plus evil-iedit-state iedit evil-exchange evil-escape evil-ediff evil-args evil-anzu anzu evil goto-chg undo-tree eval-sexp-fu elisp-slime-nav dumb-jump f dash s diminish define-word column-enforce-mode clean-aindent-mode bind-map bind-key auto-highlight-symbol auto-compile packed aggressive-indent adaptive-wrap ace-window ace-link ace-jump-helm-line helm avy helm-core popup async)))
+     '(evil-adjust kaocha-runner exwm xelb exotica-theme evil-org evil-magit magit git-commit with-editor eterm-256color xterm-color espresso-theme eshell-z eshell-prompt-extras esh-help emmet-mode elfeed-org elfeed-goodies ace-jump-mode noflet elfeed edbi epc ctable concurrent deferred ebuild-mode dracula-theme doom-themes dockerfile-mode docker transient tablist json-mode docker-tramp json-snatcher json-reformat django-theme desktop-environment darktooth-theme darkokai-theme darkmine-theme darkburn-theme dap-mode posframe lsp-treemacs bui lsp-mode dash-functional dante lcr dakrone-theme cython-mode cyberpunk-theme csv-mode company-web web-completion-data company-restclient restclient know-your-http-well ws-butler writeroom-mode winum which-key volatile-highlights vi-tilde-fringe uuidgen use-package treemacs-projectile treemacs-persp treemacs-icons-dired treemacs-evil toc-org symon symbol-overlay string-inflection spaceline-all-the-icons restart-emacs request rainbow-delimiters popwin pcre2el password-generator paradox overseer org-superstar org-bullets open-junk-file nameless move-text macrostep lorem-ipsum link-hint indent-guide hybrid-mode hungry-delete hl-todo highlight-parentheses highlight-numbers highlight-indentation helm-xref helm-themes helm-swoop helm-purpose helm-projectile helm-mode-manager helm-make helm-ls-git helm-flx helm-descbinds helm-ag google-translate golden-ratio font-lock+ flycheck-package flycheck-elsa flx-ido fill-column-indicator fancy-battery eyebrowse expand-region evil-visualstar evil-visual-mark-mode evil-unimpaired evil-tutor evil-textobj-line evil-surround evil-numbers evil-nerd-commenter evil-mc evil-matchit evil-lisp-state evil-lion evil-indent-plus evil-iedit-state evil-goggles evil-exchange evil-escape evil-ediff evil-cleverparens evil-args evil-anzu emr elisp-slime-nav editorconfig dumb-jump dotenv-mode diminish devdocs define-word company-terraform company-statistics company-shell company-reftex company-quickhelp company-ghci company-ghc company-emoji company-cabal company-auctex company-ansible company-anaconda command-log-mode column-enforce-mode color-theme-sanityinc-tomorrow color-theme-sanityinc-solarized color-identifiers-mode cmm-mode clues-theme clojure-snippets clj-refactor clean-aindent-mode cider-eval-sexp-fu chocolate-theme cherry-blossom-theme centered-cursor-mode cargo busybee-theme bubbleberry-theme browse-at-remote blacken birds-of-paradise-plus-theme badwolf-theme auto-yasnippet auto-highlight-symbol auto-dictionary auto-compile auctex-latexmk attrap arduino-mode apropospriate-theme anti-zenburn-theme ansible-doc ansible ample-zen-theme ample-theme alert alect-themes aggressive-indent afternoon-theme adoc-mode ace-link ace-jump-helm-line ac-ispell))
    '(safe-local-variable-values
-     (quote
-      ((clojurescript-mode
-        (cider-clojure-cli-global-options . "-A:fig"))
+     '((lsp-file-watch-ignored "\\.git$" "resources" "target" "/dist$" "/log$")
+       (projectile-project-root . "~/projects/professional/VA-Fix/ui")
+       (projectile-project-root "~/projects/professional/VA-Fix/ui")
+       (lsp-file-watch-ignored "\\.git$" "resources/public/js$" "target$" "dist$" "log$")
+       (lsp-file-watch-ignored "[/\\\\]\\.git$" "[/\\\\]\\.hg$" "[/\\\\]\\.bzr$" "[/\\\\]_darcs$" "[/\\\\]\\.svn$" "[/\\\\]_FOSSIL_$" "[/\\\\]\\.idea$" "[/\\\\]\\.ensime_cache$" "[/\\\\]\\.eunit$" "[/\\\\]node_modules$" "[/\\\\]\\.fslckout$" "[/\\\\]\\.tox$" "[/\\\\]\\.stack-work$" "[/\\\\]\\.bloop$" "[/\\\\]\\.metals$" "[/\\\\]target$" "[/\\\\]resources/public/js$" "[/\\\\]\\.ccls-cache$" "[/\\\\]\\.deps$" "[/\\\\]build-aux$" "[/\\\\]autom4te.cache$" "[/\\\\]\\.reference$")
+       (cider-clojure-cli-global-options nil)
        (javascript-backend . tide)
        (javascript-backend . tern)
        (javascript-backend . lsp))))
-   '(send-mail-function (quote mailclient-send-it))))
+  (custom-set-faces
+   ;; custom-set-faces was added by Custom.
+   ;; If you edit it by hand, you could mess it up, so be careful.
+   ;; Your init file should contain only one such instance.
+   ;; If there is more than one, they won't work right.
+   )
+  )
