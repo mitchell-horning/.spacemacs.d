@@ -1,0 +1,6 @@
+[submodule "layers/exwm"]
+	path = layers/exwm
+	url = git@github.com:timor/spacemacsOS.git
+[submodule "private/org-habit-plus"]
+	path = private/org-habit-plus
+	url = git@github.com:oddious/org-habit-plus.git
