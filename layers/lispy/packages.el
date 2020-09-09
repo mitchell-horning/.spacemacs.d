@@ -1,11 +1,13 @@
 (defconst lispy-packages
-  '(lispy
+  '(;; lispy
     lispyville))
 
 (defun lispy/init-lispyville ()
   (use-package lispyville
-    :init
-    (add-hook 'lispy-mode-hook #'lispyville-mode)
+    ;; :init
+    ;; (add-hook 'lispy-mode-hook #'lispyville-mode)
+    :hook ((clojure-mode cider-repl-mode emacs-lisp-mode lisp-mode) .
+           lispyville-mode)
     :config
     (progn
       (diminish 'lispyville-mode (lispyville-mode-line-string "🍰" "🍰"))
@@ -23,8 +25,8 @@
   (use-package lispy
     :defer t
     :diminish lispy-mode ""
-    :hook ((clojure-mode cider-repl-mode emacs-lisp-mode lisp-mode) .
-           lispy-mode)
+    ;; :hook ((clojure-mode cider-repl-mode emacs-lisp-mode lisp-mode) .
+    ;;        lispy-mode)
     :custom
     (lispy-compat '(edebug cider magit-blame-mode))
     (lispy-eval-display-style 'overlay)
