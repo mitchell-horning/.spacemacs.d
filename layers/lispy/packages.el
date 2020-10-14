@@ -1,5 +1,5 @@
 (defconst lispy-packages
-  '(;; lispy
+  '((lispy :location (recipe :fetcher local))
     lispyville))
 
 (defun lispy/init-lispyville ()
@@ -25,14 +25,16 @@
   (use-package lispy
     :defer t
     :diminish lispy-mode ""
-    ;; :hook ((clojure-mode cider-repl-mode emacs-lisp-mode lisp-mode) .
-    ;;        lispy-mode)
+    :hook ((clojure-mode cider-repl-mode emacs-lisp-mode lisp-mode) .
+           lispy-mode)
     :custom
     (lispy-compat '(edebug cider magit-blame-mode))
     (lispy-eval-display-style 'overlay)
     :config
     (progn
-      (define-key lispy-mode-map (kbd "M-RET") nil)
+      (define-key lispy-mode-map-lispy (kbd "<M-return>") nil)
+      (define-key lispy-mode-map-evilcp (kbd "<M-return>") nil)
+      (define-key lispy-mode-map-lispy (kbd "M-RET") nil)
       (evil-define-key 'insert lispy-mode-map
         (kbd "/")   'special-lispy-splice
         (kbd ")")   'lispy-right-nostring

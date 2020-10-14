@@ -1,0 +1,4 @@
+# name: if-let
+# key: if-let
+# --
+(if-let [$0])

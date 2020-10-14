@@ -1,0 +1,4 @@
+# name: defun
+# key: defun
+# --
+(defun $1 ($0))

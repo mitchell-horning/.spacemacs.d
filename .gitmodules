@@ -4,3 +4,6 @@
 [submodule "private/org-habit-plus"]
 	path = private/org-habit-plus
 	url = git@github.com:oddious/org-habit-plus.git
+[submodule "private/all-the-icons.el"]
+	path = private/all-the-icons.el
+	url = git@github.com:domtronn/all-the-icons.el.git

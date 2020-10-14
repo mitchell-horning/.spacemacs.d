@@ -1,0 +1,4 @@
+# name: (doseq
+# key: (doseq
+# --
+(doseq [$0]
